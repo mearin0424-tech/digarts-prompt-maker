@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>絵画・アートプロンプトメーカー</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel (JSXのブラウザ内コンパイル用) -->
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body class="bg-[#f4f1ea] font-serif text-slate-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      // --- State ---
+      // Artwork Basic
+      const [artWidth, setArtWidth] = useState('50');
+      const [artHeight, setArtHeight] = useState('70');
+      const [frameStyle, setFrameStyle] = useState('アンティーク調の彫刻が施されたくすんだゴールドの額縁');
+      const [artTexture, setArtTexture] = useState('実写と見分けがつかないほどの明瞭さ。絵の具のひび割れやキャンバスの質感まで完全に再現');
+      
+      // Presets
+      const [selectedSizePreset, setSelectedSizePreset] = useState('50x70');
+
+      // Room & Placement (Image 2)
+      const [hasRoomImage, setHasRoomImage] = useState(true);
+      const [roomStyle, setRoomStyle] = useState('アンティークな書斎（Antique study scene）');
+      const [wallStyle, setWallStyle] = useState('ダークオークのパネル壁、部分的に経年変化による塗装の剥がれがある');
+      const [surroundingProps, setSurroundingProps] = useState('手前にビロード張りの椅子、真鍮と鉄の燭台、大理石の彫刻、光沢のある陶器の花瓶に生けられた枝');
+      const [placement, setPlacement] = useState('アンティークのサイドボードの上の壁の中央に配置');
+
+      // Camera & Lighting (Based on user's detailed prompt)
+      const [cameraSpecs, setCameraSpecs] = useState('フルサイズカメラ（Sony A9等）、単焦点レンズ（50mm f/1.8）。被写界深度は浅く、絵画と燭台にピントを合わせ、手前の椅子は自然で美しいボケ（bokeh）を作り、背景には深い影を作る。');
+      const [lighting, setLighting] = useState('ドラマチックなブラインド越しの窓の影（window-blind shadows）がソフトフォーカスの輪郭で差し込み、空気中の埃（dust motes）が太陽の光を反射している。');
+      const [atmosphere, setAtmosphere] = useState('究極のフォトリアリズム。アンティークのオーク材のサイドボードの荒い木目、大理石の彫刻の静脈、真鍮や鉄の古色（パティナ）などを完璧に再現。自然な粒子感（natural grain）とシネマティックなカラーグレーディング。');
+
+      const [copied, setCopied] = useState(false);
+      const [savedMessage, setSavedMessage] = useState('');
+
+      // Storage Key
+      const STORAGE_KEY = 'paintingPromptDefaults_standalone_v1';
+
+      // --- Preset Data ---
+      const SIZE_PRESETS = {
+        "A4 (ポスター小)": { w: 21, h: 29.7 },
+        "A3 (ポスター中)": { w: 29.7, h: 42 },
+        "B2 (ポスター大)": { w: 51.5, h: 72.8 },
+        "F10 (キャンバス中)": { w: 53, h: 45.5 },
+        "F20 (キャンバス大)": { w: 72.7, h: 60.6 },
+        "50x70 (IKEA等標準)": { w: 50, h: 70 },
+        "100x100 (大型スクエア)": { w: 100, h: 100 }
+      };
+
+      useEffect(() => {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (savedData) {
+          try {
+            const parsed = JSON.parse(savedData);
+            setArtWidth(parsed.artWidth || '50');
+            setArtHeight(parsed.artHeight || '70');
+            setFrameStyle(parsed.frameStyle || 'アンティーク調の彫刻が施されたくすんだゴールドの額縁');
+            setArtTexture(parsed.artTexture || '実写と見分けがつかないほどの明瞭さ。絵の具のひび割れやキャンバスの質感まで完全に再現');
+            setHasRoomImage(parsed.hasRoomImage !== undefined ? parsed.hasRoomImage : true);
+            setRoomStyle(parsed.roomStyle || 'アンティークな書斎（Antique study scene）');
+            setWallStyle(parsed.wallStyle || 'ダークオークのパネル壁、部分的に経年変化による塗装の剥がれがある');
+            setSurroundingProps(parsed.surroundingProps || '手前にビロード張りの椅子、真鍮と鉄の燭台、大理石の彫刻、光沢のある陶器の花瓶に生けられた枝');
+            setPlacement(parsed.placement || 'アンティークのサイドボードの上の壁の中央に配置');
+            setCameraSpecs(parsed.cameraSpecs || 'フルサイズカメラ（Sony A9等）、単焦点レンズ（50mm f/1.8）。被写界深度は浅く、絵画と燭台にピントを合わせ、手前の椅子は自然で美しいボケ（bokeh）を作り、背景には深い影を作る。');
+            setLighting(parsed.lighting || 'ドラマチックなブラインド越しの窓の影（window-blind shadows）がソフトフォーカスの輪郭で差し込み、空気中の埃（dust motes）が太陽の光を反射している。');
+            setAtmosphere(parsed.atmosphere || '究極のフォトリアリズム。アンティークのオーク材のサイドボードの荒い木目、大理石の彫刻の静脈、真鍮や鉄の古色（パティナ）などを完璧に再現。自然な粒子感（natural grain）とシネマティックなカラーグレーディング。');
+          } catch (e) {
+            console.error('Failed to parse saved defaults', e);
+          }
+        }
+      }, []);
+
+      const saveDefaults = () => {
+        const dataToSave = {
+          artWidth, artHeight, frameStyle, artTexture,
+          hasRoomImage, roomStyle, wallStyle, surroundingProps, placement,
+          cameraSpecs, lighting, atmosphere
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        setSavedMessage('デフォルト値として保存しました');
+        setTimeout(() => setSavedMessage(''), 3000);
+      };
+
+      const handleSizePresetChange = (presetKey) => {
+        setSelectedSizePreset(presetKey);
+        if (presetKey && SIZE_PRESETS[presetKey]) {
+          setArtWidth(SIZE_PRESETS[presetKey].w);
+          setArtHeight(SIZE_PRESETS[presetKey].h);
+        }
+      };
+
+      const generatePrompt = () => {
+        let prompt = `#Instruction
+添付した画像のアートワーク（絵画）を、指定した部屋の壁に飾った高品質なモックアップ（インテリア写真）として生成してください。
+
+【厳守事項】
+- 1枚目の絵画（アートワーク）の「デザイン」「色味」「アスペクト比（縦横比）」は一切変更せず、100%忠実に再現すること。AIによる勝手な絵画の改変は厳禁です。
+- 絵画のサイズ感を、提供された寸法（幅${artWidth}cm x 高さ${artHeight}cm）に基づき、周囲の家具や壁との相対的な比率を【極めて正確に】保って配置してください。不自然に大きすぎたり小さすぎたりしないこと。
+${hasRoomImage ? '- 2枚目の画像（部屋の背景）について、「構図」「家具の配置」「ライティング」を一切変更せず、完全に保持してください。' : ''}
+
+#References
+- 1枚目: 飾る対象のアートワーク（絵画）の画像。絶対に改変しないこと。
+${hasRoomImage ? '- 2枚目: 背景となる部屋・インテリアの参照画像。絶対に改変しないこと。' : ''}
+
+#Artwork Specifications (絵画の詳細仕様)
+- 実寸サイズ: 幅 ${artWidth} cm × 高さ ${artHeight} cm （この比率とサイズ感を厳守）
+- フレーム（額縁）: ${frameStyle}
+- アートワークの質感: ${artTexture}
+
+#Environment & Placement (環境と配置)
+${hasRoomImage ? 
+`- 背景: 2枚目の画像を完全に維持し、勝手な要素の追加や変更を行わないこと。
+- 絵画の配置場所: ${placement}` 
+: 
+`- 部屋のスタイル: ${roomStyle}
+- 壁の素材・色: ${wallStyle}
+- 周囲のインテリア・家具: ${surroundingProps}
+- 絵画の配置場所: ${placement}`
+}
+
+#Camera, Lighting & Atmosphere (撮影設定と雰囲気)
+- カメラ設定: ${cameraSpecs}
+- ライティング: ${lighting}
+- 質感描写と雰囲気: ${atmosphere}
+`;
+        return prompt;
+      };
+
+      const handleCopy = () => {
+        const text = generatePrompt();
+        try {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand("copy");
+          textArea.remove();
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+          console.error('Failed to copy text: ', err);
+        }
+      };
+
+      const InputGroup = ({ label, children }) => (
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-slate-700 mb-1">{label}</label>
+          {children}
+        </div>
+      );
+
+      return (
+        <div className="min-h-screen p-4 md:p-8">
+          <div className="max-w-6xl mx-auto">
+            <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/react/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-700"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                  絵画・アートモックアップ プロンプトメーカー
+                </h1>
+                <p className="text-slate-600 mt-2 font-sans">アートワークの画像と部屋の画像を合成し、サイズ感やライティングが完璧に馴染むプロンプトを構築します。</p>
+              </div>
+              <div className="flex flex-col items-end gap-2 font-sans">
+                 <div className="flex gap-2">
+                    <button onClick={saveDefaults} className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-sm font-semibold rounded-md transition-colors shadow-sm">
+                       現在の値を保存
+                    </button>
+                 </div>
+                 {savedMessage && <span className="text-emerald-600 text-sm font-bold">{savedMessage}</span>}
+              </div>
+            </header>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-amber-200 mb-8 font-sans">
+              <h2 className="text-lg font-bold text-amber-800 mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/react/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                AIツールに添付する画像のルール
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-700">
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
+                  <span className="font-bold text-amber-900">1枚目 (必須) : アートワーク（絵画）自体</span>
+                  <p className="mt-1">飾りたい絵画やポスターの画像を添付します。このデザインが100%維持されます。</p>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                  <span className="font-bold text-slate-700">2枚目 (任意) : 背景となる部屋の画像</span>
+                  <p className="mt-1">絵を飾る部屋の画像を添付します。無い場合はチェックを外してください。</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="w-full lg:w-1/2 space-y-6 font-sans">
+                
+                {/* アートワーク設定 */}
+                <section className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">1. 絵画の詳細設定 (1枚目の画像)</h2>
+                  
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-100 mb-4">
+                     <h3 className="text-sm font-bold text-amber-800 mb-3">サイズ指定（家具との対比用）</h3>
+                     <div className="mb-3">
+                        <select 
+                          className="w-full p-2 border border-amber-200 rounded-lg bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm"
+                          value={selectedSizePreset} 
+                          onChange={(e) => handleSizePresetChange(e.target.value)}
+                        >
+                          <option value="">-- 手動入力 --</option>
+                          {Object.keys(SIZE_PRESETS).map(key => (
+                            <option key={key} value={key}>{key}</option>
+                          ))}
+                        </select>
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <InputGroup label="幅 (cm)">
+                          <input type="number" className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none" value={artWidth} onChange={e => setArtWidth(e.target.value)} />
+                        </InputGroup>
+                        <InputGroup label="高さ (cm)">
+                          <input type="number" className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none" value={artHeight} onChange={e => setArtHeight(e.target.value)} />
+                        </InputGroup>
+                     </div>
+                  </div>
+
+                  <InputGroup label="フレーム（額縁）のスタイル">
+                    <input type="text" className="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={frameStyle} onChange={e => setFrameStyle(e.target.value)} placeholder="例：黒の細い木製フレーム、額縁なし" />
+                  </InputGroup>
+                  <InputGroup label="アートワークの質感（キャンバス、油絵、ポスター等）">
+                    <textarea className="w-full p-2 border rounded-lg bg-slate-50 h-16 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={artTexture} onChange={e => setArtTexture(e.target.value)}></textarea>
+                  </InputGroup>
+                </section>
+
+                <section className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex flex-wrap items-center justify-between gap-2">
+                    <span>2. 部屋・配置設定</span>
+                    <label className="flex items-center gap-2 text-sm font-normal cursor-pointer bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                      <input type="checkbox" className="w-4 h-4 text-amber-600 rounded" checked={hasRoomImage} onChange={e => setHasRoomImage(e.target.checked)} />
+                      <span>2枚目(部屋)画像を添付する</span>
+                    </label>
+                  </h2>
+                  <div className={`transition-opacity duration-200 ${hasRoomImage ? "opacity-50 pointer-events-none" : ""}`}>
+                    <InputGroup label="部屋のスタイル">
+                      <input type="text" className="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={roomStyle} onChange={e => setRoomStyle(e.target.value)} disabled={hasRoomImage} />
+                    </InputGroup>
+                    <InputGroup label="壁の素材・色">
+                      <input type="text" className="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={wallStyle} onChange={e => setWallStyle(e.target.value)} disabled={hasRoomImage} />
+                    </InputGroup>
+                    <InputGroup label="周囲のインテリア・家具">
+                      <textarea className="w-full p-2 border rounded-lg bg-slate-50 h-16 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={surroundingProps} onChange={e => setSurroundingProps(e.target.value)} disabled={hasRoomImage}></textarea>
+                    </InputGroup>
+                  </div>
+                  <InputGroup label="絵画の配置場所">
+                    <input type="text" className="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={placement} onChange={e => setPlacement(e.target.value)} />
+                  </InputGroup>
+                </section>
+
+                <section className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">3. カメラ・ライティング設定</h2>
+                  <InputGroup label="カメラ設定（レンズ、被写界深度など）">
+                    <textarea className="w-full p-2 border rounded-lg bg-slate-50 h-20 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={cameraSpecs} onChange={e => setCameraSpecs(e.target.value)}></textarea>
+                  </InputGroup>
+                  <InputGroup label="ライティング（光と影の入り方）">
+                    <textarea className="w-full p-2 border rounded-lg bg-slate-50 h-20 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={lighting} onChange={e => setLighting(e.target.value)}></textarea>
+                  </InputGroup>
+                  <InputGroup label="質感描写と雰囲気">
+                    <textarea className="w-full p-2 border rounded-lg bg-slate-50 h-24 focus:ring-2 focus:ring-amber-500 focus:outline-none" value={atmosphere} onChange={e => setAtmosphere(e.target.value)}></textarea>
+                  </InputGroup>
+                </section>
+              </div>
+
+              <div className="w-full lg:w-1/2">
+                <div className="bg-slate-900 rounded-xl shadow-lg sticky top-6 overflow-hidden flex flex-col h-[calc(100vh-3rem)] max-h-[900px]">
+                  <div className="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+                    <h2 className="text-white font-bold flex items-center gap-2 font-sans">
+                      <svg xmlns="http://www.w3.org/react/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                      生成されたプロンプト
+                    </h2>
+                    <button 
+                      onClick={handleCopy}
+                      className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 flex items-center gap-2 font-sans ${copied ? 'bg-emerald-500 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white'}`}
+                    >
+                      {copied ? (
+                        <React.Fragment>
+                          <svg xmlns="http://www.w3.org/react/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          コピー完了
+                        </React.Fragment>
+                      ) : (
+                        <React.Fragment>
+                          <svg xmlns="http://www.w3.org/react/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                          コピーする
+                        </React.Fragment>
+                      )}
+                    </button>
+                  </div>
+                  <div className="p-0 flex-grow relative">
+                    <textarea 
+                      className="w-full h-full p-6 bg-slate-900 text-slate-200 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500 leading-relaxed"
+                      value={generatePrompt()}
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
