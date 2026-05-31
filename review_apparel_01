@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アパレルデザイン プロンプトジェネレーター</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* カスタムスクロールバー */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-neutral-50 text-neutral-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- ヘッダー -->
+        <header class="mb-8 text-center md:text-left flex items-center justify-center md:justify-start gap-3">
+            <div class="bg-neutral-900 text-white p-2 rounded-lg">
+                <!-- Sparkles Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-neutral-900 tracking-tight">Apparel Design Prompt Generator</h1>
+                <p class="text-sm text-neutral-500 mt-1">AIにデザインレビューを依頼するためのプロンプト作成ツール</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- 左側：入力フォーム -->
+            <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 md:p-8">
+                <h2 class="text-lg font-semibold mb-6 border-b pb-2 flex items-center gap-2">
+                    <!-- MessageSquare Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-neutral-500">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    デザインの前提条件を入力
+                </h2>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">【ターゲット層】</label>
+                        <input type="text" id="input-target" placeholder="例：20代後半〜30代の働く女性 / Z世代のストリートファッション好き" class="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors text-sm" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">【シーズン・着用シーン】</label>
+                        <input type="text" id="input-scene" placeholder="例：秋冬のアウター / リゾートでのディナー用" class="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors text-sm" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">【ブランドコンセプト・テーマ】</label>
+                        <input type="text" id="input-concept" placeholder="例：「ミニマル＆サステナブル」 / 今回のテーマは「都会のノスタルジー」" class="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors text-sm" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">【想定している素材】</label>
+                        <input type="text" id="input-material" placeholder="例：リネン混紡 / 厚手のコットンキャンバス / まだ未定" class="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors text-sm" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">【価格帯】</label>
+                        <input type="text" id="input-price" placeholder="例：1万〜2万円台の中価格帯 / ハイエンド" class="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors text-sm" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-1">その他・特に相談したいこと (任意)</label>
+                        <textarea id="input-additional" placeholder="例：襟のボリューム感に悩んでいます。カラーバリエーションの提案も欲しいです。" rows="3" class="w-full px-4 py-2 bg-neutral-50 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors text-sm resize-y"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：プレビュー＆コピー -->
+            <div class="flex flex-col h-full">
+                <div class="bg-neutral-900 rounded-2xl shadow-lg p-6 md:p-8 flex-grow flex flex-col relative overflow-hidden">
+                    <!-- 背景の装飾 -->
+                    <div class="absolute top-0 right-0 -mr-16 -mt-16 text-neutral-800 opacity-50 pointer-events-none">
+                        <svg width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5Z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+
+                    <div class="relative z-10 flex justify-between items-end mb-4">
+                        <h2 class="text-lg font-semibold text-white">生成されたプロンプト</h2>
+                        <button id="copy-btn" class="flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 bg-white text-neutral-900 hover:bg-neutral-200">
+                            <!-- Copy Icon -->
+                            <svg id="icon-copy" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                            </svg>
+                            <!-- Check Icon -->
+                            <svg id="icon-check" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 hidden">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            <span id="copy-text">コピーする</span>
+                        </button>
+                    </div>
+                    
+                    <div class="relative z-10 flex-grow">
+                        <textarea id="prompt-output" readonly class="w-full h-full min-h-[400px] p-4 bg-neutral-800/80 text-neutral-200 border border-neutral-700 rounded-lg focus:outline-none font-mono text-sm leading-relaxed resize-none custom-scrollbar"></textarea>
+                    </div>
+                    
+                    <div class="relative z-10 mt-4 text-xs text-neutral-400">
+                        <p>※ 上記の「コピーする」ボタンを押し、ChatGPTやGeminiなどのAIチャットに貼り付け、デザイン画像と一緒に送信してください。</p>
+                        <p class="mt-1">※ 未入力の項目は「未指定」としてプロンプトが生成されます。</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- アプリケーションロジック -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = {
+                target: document.getElementById('input-target'),
+                scene: document.getElementById('input-scene'),
+                concept: document.getElementById('input-concept'),
+                material: document.getElementById('input-material'),
+                price: document.getElementById('input-price'),
+                additional: document.getElementById('input-additional')
+            };
+            
+            const output = document.getElementById('prompt-output');
+            const copyBtn = document.getElementById('copy-btn');
+            const copyText = document.getElementById('copy-text');
+            const iconCopy = document.getElementById('icon-copy');
+            const iconCheck = document.getElementById('icon-check');
+
+            let copyTimeout;
+
+            // プロンプトを生成する関数
+            function generatePrompt() {
+                const targetText = inputs.target.value || '未指定（デザインから推測してください）';
+                const sceneText = inputs.scene.value || '未指定（デザインから推測してください）';
+                const conceptText = inputs.concept.value || '未指定';
+                const materialText = inputs.material.value || '未指定';
+                const priceText = inputs.price.value || '未指定';
+                
+                let additionalText = '';
+                if (inputs.additional.value) {
+                    additionalText = `\n## 特に相談したいこと・悩んでいる点\n${inputs.additional.value}\n`;
+                }
+
+                const newPrompt = `あなたは世界的なブランドで経験を積んだ、プロのアパレルデザイナー兼クリエイティブディレクターです。
+私が作成したアパレルデザインの画像（または詳細な説明）を元に、プロの視点から厳しくも建設的なレビューを行ってください。
+
+## デザインの前提条件
+以下の条件を踏まえて評価してください。
+* 【ターゲット層】：${targetText}
+* 【シーズン・着用シーン】：${sceneText}
+* 【ブランドコンセプト・テーマ】：${conceptText}
+* 【想定している素材】：${materialText}
+* 【価格帯】：${priceText}
+${additionalText}
+## 評価項目
+以下の多角的な視点から分析をお願いします。
+1. デザイン性とオリジナリティ（目を引くポイントや独自性はあるか）
+2. トレンドと市場性（現在のトレンドに合致しているか、ターゲット層に響くか）
+3. シルエットと構造（着用時の美しさ、パターンや縫製の実現可能性）
+4. 配色と素材の相性（想定素材とデザイン・カラーのバランス）
+5. 機能性と着心地（着脱のしやすさ、日常使いの快適さ）
+
+## 出力形式
+以下のフォーマットで出力してください。
+* 【全体的な印象】：（デザインの第一印象と総評）
+* 【高く評価できる点】：（このデザインの強み、そのまま活かすべき魅力）
+* 【改善・ブラッシュアップが必要な点】：（弱み、違和感のある部分、実用上の懸念点）
+* 【具体的な改善アイデア】：（シルエットの微調整、ディテールの追加・削除、別素材の提案など、具体的なアイデアを3つ以上）`;
+
+                output.value = newPrompt;
+                
+                // 入力変更時にコピーボタンの状態をリセット
+                resetCopyState();
+            }
+
+            // コピーボタンの状態を元に戻す
+            function resetCopyState() {
+                if (copyBtn.classList.contains('bg-green-500')) {
+                    copyBtn.classList.remove('bg-green-500', 'text-white');
+                    copyBtn.classList.add('bg-white', 'text-neutral-900', 'hover:bg-neutral-200');
+                    copyText.textContent = 'コピーする';
+                    iconCopy.classList.remove('hidden');
+                    iconCheck.classList.add('hidden');
+                }
+            }
+
+            // クリップボードへコピー
+            async function copyToClipboard() {
+                const textToCopy = output.value;
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    showCopiedState();
+                } catch (err) {
+                    // フォールバック (古いブラウザやiFrame制限用)
+                    const textArea = document.createElement("textarea");
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showCopiedState();
+                    } catch (err) {
+                        console.error('コピーに失敗しました', err);
+                        alert('コピーに失敗しました。テキストエリアから手動でコピーしてください。');
+                    }
+                    document.body.removeChild(textArea);
+                }
+            }
+
+            // コピー成功時のUI変更
+            function showCopiedState() {
+                clearTimeout(copyTimeout);
+                
+                copyBtn.classList.remove('bg-white', 'text-neutral-900', 'hover:bg-neutral-200');
+                copyBtn.classList.add('bg-green-500', 'text-white');
+                copyText.textContent = 'コピーしました';
+                iconCopy.classList.add('hidden');
+                iconCheck.classList.remove('hidden');
+
+                // 2秒後に元の状態に戻す
+                copyTimeout = setTimeout(() => {
+                    resetCopyState();
+                }, 2000);
+            }
+
+            // すべての入力フィールドにイベントリスナーを設定
+            Object.values(inputs).forEach(input => {
+                input.addEventListener('input', generatePrompt);
+            });
+
+            // コピーボタンにクリックイベントを設定
+            copyBtn.addEventListener('click', copyToClipboard);
+
+            // 初期ロード時に1回実行してプレビューを生成
+            generatePrompt();
+        });
+    </script>
+</body>
+</html>
