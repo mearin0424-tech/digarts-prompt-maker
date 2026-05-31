@@ -1,0 +1,574 @@
+import React, { useState, useEffect } from 'react';
+
+export default function App() {
+  // --- State ---
+  // Model Basic
+  const [gender, setGender] = useState('男性');
+  const [height, setHeight] = useState('188');
+  const [headRatio, setHeadRatio] = useState('8.5');
+  
+  // Model Proportions
+  const [shoulderWidth, setShoulderWidth] = useState('48');
+  const [legLength, setLegLength] = useState('92');
+  const [armLength, setArmLength] = useState('66');
+  const [waist, setWaist] = useState('72');
+  
+  // --- New States for Presets ---
+  const [selectedBody, setSelectedBody] = useState('');
+  const [selectedSize, setSelectedSize] = useState('L');
+
+  // Tops (Image 2 & 3)
+  const [itemType, setItemType] = useState('Tシャツ');
+  const [fit, setFit] = useState('XLサイズ、肩がドロップしたゆったりとした身幅のオーバーサイズシルエット');
+  const [texture, setTexture] = useState('高級感のあるヘビーウェイトコットン');
+  const [hasBackImage, setHasBackImage] = useState(false);
+
+  // Tops Detailed Specs
+  const [itemLength, setItemLength] = useState('76');
+  const [itemWidth, setItemWidth] = useState('66');
+  const [itemShoulder, setItemShoulder] = useState('61');
+  const [itemSleeve, setItemSleeve] = useState('60.5');
+  const [sheerness, setSheerness] = useState('なし');
+  const [lining, setLining] = useState('なし');
+  const [stretch, setStretch] = useState('なし');
+  const [gloss, setGloss] = useState('なし');
+  const [thickness, setThickness] = useState('厚手 (12.4oz)');
+  const [material, setMaterial] = useState('コットン 100%');
+  
+  // Bottoms (Image 4)
+  const [hasBottomsImage, setHasBottomsImage] = useState(false);
+  const [bottomsInstruction, setBottomsInstruction] = useState('非常にワイドなシルエットのパンツと、それに合わせたボリュームのある靴。裾はブーツインしない。');
+
+  // Styling & Environment
+  const [accessories, setAccessories] = useState('ネックレスは装着しない。指にはシルバー系のシンプルなリングを着用。');
+  const [pose, setPose] = useState('アンニュイな表情、洗練された佇まい。服のオーバーサイズシルエットと素材感を強調するポーズ。');
+  const [environment, setEnvironment] = useState('白い清潔でミニマルなスタジオ。ソフトで拡散したスタジオライティング。パリのモード系（High-fashion Mode style）');
+
+  const [copied, setCopied] = useState(false);
+  const [savedMessage, setSavedMessage] = useState('');
+
+  // Storage Key
+  const STORAGE_KEY = 'apparelPromptDefaults_v3';
+
+  // --- Preset Data ---
+  // 抽出可能なボディデータを登録
+  const BODY_DATA = {
+    "hoodie-R00104": { S: {l:70, w:60, s:56.5, sl:56}, M: {l:72, w:62, s:58, sl:57.5}, L: {l:74, w:64, s:59.5, sl:59}, XL: {l:76, w:66, s:61, sl:60.5}, XXL: {l:78, w:68, s:62.5, sl:62} },
+    "hoodie-253021-gc1310": { S: {l:61, w:51, s:44, sl:55}, M: {l:65, w:54, s:48, sl:59}, L: {l:69, w:57, s:52, sl:60}, XL: {l:74, w:62, s:55, sl:61}, XXL: {l:79, w:67, s:58, sl:62} },
+    "hoodie-253041-vn4350": { S: {l:64, w:54, s:46, sl:61}, M: {l:67, w:57, s:49, sl:62}, L: {l:70, w:60, s:52, sl:63}, XL: {l:73, w:63, s:55, sl:64}, XXL: {l:76, w:66, s:58, sl:65} },
+    "sweatshirt-RU0064": { S: {l:70, w:62, s:57, sl:57}, M: {l:72, w:64, s:59, sl:58}, L: {l:74, w:66, s:61, sl:59}, XL: {l:76, w:68, s:63, sl:60}, XXL: {l:78, w:70, s:65, sl:61} },
+    "tshirt-311111": { S: {l:74, w:58, s:57.5, sl:23.5}, M: {l:76, w:60, s:58, sl:24}, L: {l:78, w:62, s:59.5, sl:24.5} },
+    "tshirt-RG0001": { S: {l:73, w:57, s:58, sl:22}, M: {l:74, w:59, s:59.5, sl:22.5}, L: {l:75, w:61, s:61, sl:23}, XL: {l:77, w:63, s:62.5, sl:23.5}, XXL: {l:79, w:65, s:64, sl:24} },
+    "tshirt-RT0076": { S: {l:62, w:61, s:57, sl:25}, M: {l:64, w:63, s:59, sl:26}, L: {l:66, w:65, s:61, sl:27}, XL: {l:68, w:67, s:63, sl:28}, XXL: {l:70, w:69, s:65, sl:29} },
+    "tshirt-RT0086": { S: {l:71, w:53, s:50, sl:22}, M: {l:73, w:56, s:53, sl:22.5}, L: {l:75, w:59, s:56, sl:23}, XL: {l:77, w:62, s:59, sl:23.5}, XXL: {l:79, w:65, s:62, sl:24} },
+    "jacket-RQ0016": { S: {l:66.5, w:64, s:54.5, sl:62.5}, M: {l:68.5, w:66, s:56, sl:63.5}, L: {l:70.5, w:68, s:57.5, sl:64.5}, XL: {l:72.5, w:70, s:59, sl:65.5}, XXL: {l:74.5, w:72, s:60.5, sl:66.5} }
+  };
+
+  // --- LocalStorage Logic ---
+  useEffect(() => {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setGender(parsed.gender || '男性');
+        setHeight(parsed.height || '188');
+        setHeadRatio(parsed.headRatio || '8.5');
+        setShoulderWidth(parsed.shoulderWidth || '48');
+        setLegLength(parsed.legLength || '92');
+        setArmLength(parsed.armLength || '66');
+        setWaist(parsed.waist || '72');
+        setItemType(parsed.itemType || 'Tシャツ');
+        setFit(parsed.fit || 'XLサイズ、肩がドロップしたゆったりとした身幅のオーバーサイズシルエット');
+        setTexture(parsed.texture || '高級感のあるヘビーウェイトコットン');
+        setHasBackImage(parsed.hasBackImage !== undefined ? parsed.hasBackImage : false);
+        
+        setItemLength(parsed.itemLength || '76');
+        setItemWidth(parsed.itemWidth || '66');
+        setItemShoulder(parsed.itemShoulder || '61');
+        setItemSleeve(parsed.itemSleeve || '60.5');
+        setSheerness(parsed.sheerness || 'なし');
+        setLining(parsed.lining || 'なし');
+        setStretch(parsed.stretch || 'なし');
+        setGloss(parsed.gloss || 'なし');
+        setThickness(parsed.thickness || '厚手 (12.4oz)');
+        setMaterial(parsed.material || 'コットン 100%');
+        
+        setSelectedBody(parsed.selectedBody || '');
+        setSelectedSize(parsed.selectedSize || 'L');
+
+        setHasBottomsImage(parsed.hasBottomsImage !== undefined ? parsed.hasBottomsImage : false);
+        setBottomsInstruction(parsed.bottomsInstruction || '非常にワイドなシルエットのパンツと、それに合わせたボリュームのある靴。裾はブーツインしない。');
+        setAccessories(parsed.accessories || 'ネックレスは装着しない。指にはシルバー系のシンプルなリングを着用。');
+        setPose(parsed.pose || 'アンニュイな表情、洗練された佇まい。服のオーバーサイズシルエットと素材感を強調するポーズ。');
+        setEnvironment(parsed.environment || '白い清潔でミニマルなスタジオ。ソフトで拡散したスタジオライティング。パリのモード系（High-fashion Mode style）');
+      } catch (e) {
+        console.error('Failed to parse saved defaults', e);
+      }
+    }
+  }, []);
+
+  const saveDefaults = () => {
+    const dataToSave = {
+      gender, height, headRatio, shoulderWidth, legLength, armLength, waist,
+      itemType, fit, texture, hasBackImage, selectedBody, selectedSize,
+      itemLength, itemWidth, itemShoulder, itemSleeve, sheerness, lining, stretch, gloss, thickness, material,
+      hasBottomsImage, bottomsInstruction, accessories, pose, environment
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    setSavedMessage('デフォルト値として保存しました');
+    setTimeout(() => setSavedMessage(''), 3000);
+  };
+
+  const loadDefaults = () => {
+     const savedData = localStorage.getItem(STORAGE_KEY);
+     if(savedData){
+         try {
+            const parsed = JSON.parse(savedData);
+            setGender(parsed.gender || '男性');
+            setHeight(parsed.height || '188');
+            setHeadRatio(parsed.headRatio || '8.5');
+            setShoulderWidth(parsed.shoulderWidth || '48');
+            setLegLength(parsed.legLength || '92');
+            setArmLength(parsed.armLength || '66');
+            setWaist(parsed.waist || '72');
+            setItemType(parsed.itemType || 'Tシャツ');
+            setFit(parsed.fit || 'XLサイズ、肩がドロップしたゆったりとした身幅のオーバーサイズシルエット');
+            setTexture(parsed.texture || '高級感のあるヘビーウェイトコットン');
+            setHasBackImage(parsed.hasBackImage !== undefined ? parsed.hasBackImage : false);
+            
+            setItemLength(parsed.itemLength || '76');
+            setItemWidth(parsed.itemWidth || '66');
+            setItemShoulder(parsed.itemShoulder || '61');
+            setItemSleeve(parsed.itemSleeve || '60.5');
+            setSheerness(parsed.sheerness || 'なし');
+            setLining(parsed.lining || 'なし');
+            setStretch(parsed.stretch || 'なし');
+            setGloss(parsed.gloss || 'なし');
+            setThickness(parsed.thickness || '厚手 (12.4oz)');
+            setMaterial(parsed.material || 'コットン 100%');
+            
+            setSelectedBody(parsed.selectedBody || '');
+            setSelectedSize(parsed.selectedSize || 'L');
+
+            setHasBottomsImage(parsed.hasBottomsImage !== undefined ? parsed.hasBottomsImage : false);
+            setBottomsInstruction(parsed.bottomsInstruction || '非常にワイドなシルエットのパンツと、それに合わせたボリュームのある靴。裾はブーツインしない。');
+            setAccessories(parsed.accessories || 'ネックレスは装着しない。指にはシルバー系のシンプルなリングを着用。');
+            setPose(parsed.pose || 'アンニュイな表情、洗練された佇まい。服のオーバーサイズシルエットと素材感を強調するポーズ。');
+            setEnvironment(parsed.environment || '白い清潔でミニマルなスタジオ。ソフトで拡散したスタジオライティング。パリのモード系（High-fashion Mode style）');
+            
+            setSavedMessage('保存したデフォルト値を読み込みました');
+            setTimeout(() => setSavedMessage(''), 3000);
+         } catch(e){
+            console.error(e);
+         }
+     }
+  };
+
+  // --- Handlers for Presets ---
+  const handleGenderChange = (e) => {
+    const newGender = e.target.value;
+    setGender(newGender);
+    if (newGender === '女性') {
+      setHeight('165');
+      setHeadRatio('8');
+      setShoulderWidth('40');
+      setLegLength('80');
+      setArmLength('58');
+      setWaist('60');
+    } else if (newGender === '男性') {
+      setHeight('188');
+      setHeadRatio('8.5');
+      setShoulderWidth('48');
+      setLegLength('92');
+      setArmLength('66');
+      setWaist('72');
+    }
+  };
+
+  const handlePresetChange = (body, size) => {
+    setSelectedBody(body);
+    setSelectedSize(size);
+    if (body && BODY_DATA[body] && BODY_DATA[body][size]) {
+      const dims = BODY_DATA[body][size];
+      setItemLength(dims.l);
+      setItemWidth(dims.w);
+      setItemShoulder(dims.s);
+      setItemSleeve(dims.sl);
+    }
+  };
+
+  // --- Prompt Generation Logic ---
+  const generatePrompt = () => {
+    let prompt = `#Instruction
+添付した画像のアパレル商品を、高品質な広告用着用画像として生成してください。
+
+【厳守事項】
+- 2枚目画像の服のサイズ感、質感、デザインを、参照画像と具体的な指示の通り100%忠実に再現すること。AIによる勝手なデザインの追加・変更（創作）は厳禁です。
+- 1枚目の画像（モデルと背景）について、モデルの「顔」「体型」、および「背景（スタジオ、ライティング等）」は一切変更せず、完全に保持してください。
+
+#References
+- 1枚目: モデルの体型、顔、スタジオの雰囲気（背景、ライティング）の参照用。絶対に改変しないこと。
+- 2枚目: モデルが着用する服の【表面】デザインの参照用。\n`;
+
+    let currentIndex = 3;
+
+    if (hasBackImage) {
+      prompt += `- ${currentIndex}枚目: モデルが着用する服の【裏面】デザインの参照用。\n`;
+      currentIndex++;
+    }
+    
+    if (hasBottomsImage) {
+      prompt += `- ${currentIndex}枚目: モデルが着用するボトムスと靴のデザイン、シルエットの参照用。\n`;
+    }
+
+    prompt += `
+#Model Details & Proportions
+- 基本情報: 身長${height}cm、${headRatio}頭身の${gender}ハイファッションモデル。
+- プロポーション詳細（具体的な数値に基づくサイズ感の表現）:
+  - 肩幅: ${shoulderWidth}cm
+  - 脚の長さ(股下): ${legLength}cm
+  - 腕の長さ: ${armLength}cm
+  - ウエスト: ${waist}cm
+
+#Product & Styling
+- 着用商品（トップス）: 2枚目${hasBackImage ? `・3枚目` : ''}の画像にある${itemType}。
+  - フィット感: ${fit}
+  - 質感: ${texture}
+  - デザイン: 参照画像を完全に再現すること。首のタグは見えないようにする。${!hasBackImage ? '【重要】裏面の画像がないため、服の裏側は一切見えない構図にすること。' : ''}
+  
+【メイン商品 詳細仕様】
+- 寸法: 身丈${itemLength}cm、身幅${itemWidth}cm、肩幅${itemShoulder}cm、袖丈${itemSleeve}cm
+- 素材・テクスチャ詳細:
+  - 素材: ${material}
+  - 生地の厚さ: ${thickness}
+  - 透け感: ${sheerness}
+  - 裏地: ${lining}
+  - 伸縮性: ${stretch}
+  - 光沢感: ${gloss}
+`;
+
+    if (hasBottomsImage) {
+      prompt += `- ボトムス・靴: 添付画像のデザインとシルエットを忠実に再現。${bottomsInstruction ? `補足事項：${bottomsInstruction}` : ''}\n`;
+    } else {
+      prompt += `- ボトムス・靴（画像指定なし）: ${bottomsInstruction}\n`;
+    }
+
+    prompt += `- アクセサリー: ${accessories}
+- ポーズと表情: ${pose}
+
+#Environment
+- 背景・雰囲気: ${environment}
+- 画質: 高解像度、フォトリアリスティックで商業広告レベルのクオリティ。`;
+
+    return prompt;
+  };
+
+  // --- Handlers ---
+  const handleCopy = () => {
+    const text = generatePrompt();
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      textArea.remove();
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  // --- UI Components ---
+  const InputGroup = ({ label, children }) => (
+    <div className="mb-4">
+      <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
+      {children}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8 font-sans">
+      <div className="max-w-6xl mx-auto">
+        <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/react/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M20.38 3.46 16 2a8 8 0 0 1-8 8 8 8 0 0 0-8 8v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a8 8 0 0 0-3.62-6.54z"/><path d="M22 14 2 14"/></svg>
+              アパレルプロンプトメーカー
+            </h1>
+            <p className="text-gray-600 mt-2">添付画像の有無や条件を入力すると、AI画像生成用の最適なプロンプトを構築します。</p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+             <div className="flex gap-2">
+                <button onClick={saveDefaults} className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-semibold rounded-md transition-colors shadow-sm">
+                   現在の値を保存
+                </button>
+                <button onClick={loadDefaults} className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-semibold rounded-md transition-colors shadow-sm">
+                   保存値を読込
+                </button>
+             </div>
+             {savedMessage && <span className="text-green-600 text-sm font-bold">{savedMessage}</span>}
+          </div>
+        </header>
+
+        {/* 使い方ガイド */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-blue-200 mb-8">
+          <h2 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/react/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            使い方の手順（AIツールに添付する画像のルール）
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <span className="font-bold text-blue-700">1枚目 (必須) : モデル・背景のベース</span>
+              <p className="mt-1">モデルの体型、顔、ポーズ、および背景やライティングの基準となる画像を添付します。</p>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <span className="font-bold text-blue-700">2枚目 (必須) : 服の【表面】</span>
+              <p className="mt-1">着せ替えたいメイン商品の表面デザインが分かる画像を添付します。</p>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <span className="font-bold text-gray-600">3枚目 (任意) : 服の【裏面】</span>
+              <p className="mt-1">商品の裏面の画像を添付します。無い場合は「背面の画像を添付する」のチェックを外してください。</p>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <span className="font-bold text-gray-600">4枚目 (任意) : ボトムス・靴の参考</span>
+              <p className="mt-1">合わせたいボトムス等の画像を添付します。無い場合はチェックを外してください。</p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm font-semibold text-gray-800 border-t pt-3">
+            各種パラメータを設定後、「コピーする」ボタンを押し、AIツールにプロンプトと上記ルール通りの画像を一緒に入力してください。
+          </p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* 左カラム：入力フォーム */}
+          <div className="w-full lg:w-1/2 space-y-6">
+            
+            {/* モデル設定 */}
+            <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">1. モデル設定 (1枚目の画像参照)</h2>
+              <div className="grid grid-cols-3 gap-4">
+                <InputGroup label="性別">
+                  <select className="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={gender} onChange={handleGenderChange}>
+                    <option value="男性">男性</option>
+                    <option value="女性">女性</option>
+                    <option value="男女両方">男女両方</option>
+                  </select>
+                </InputGroup>
+                <InputGroup label="身長 (cm)">
+                  <input type="text" className="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={height} onChange={e => setHeight(e.target.value)} />
+                </InputGroup>
+                <InputGroup label="頭身">
+                  <div className="flex items-center gap-2">
+                    <input type="number" className="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={headRatio} onChange={e => setHeadRatio(e.target.value)} />
+                    <span className="text-sm text-gray-500">頭身</span>
+                  </div>
+                </InputGroup>
+              </div>
+
+              {/* プロポーション詳細 */}
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-100 mt-2">
+                 <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/react/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+                    プロポーション詳細（数値入力）
+                 </h3>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                    <InputGroup label="肩幅 (cm)">
+                      <input type="number" className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm" value={shoulderWidth} onChange={e => setShoulderWidth(e.target.value)} placeholder="例：48" />
+                    </InputGroup>
+                    <InputGroup label="脚の長さ/股下 (cm)">
+                      <input type="number" className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm" value={legLength} onChange={e => setLegLength(e.target.value)} placeholder="例：92" />
+                    </InputGroup>
+                    <InputGroup label="腕の長さ (cm)">
+                      <input type="number" className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm" value={armLength} onChange={e => setArmLength(e.target.value)} placeholder="例：66" />
+                    </InputGroup>
+                    <InputGroup label="ウエスト (cm)">
+                      <input type="number" className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-orange-500 focus:outline-none text-sm" value={waist} onChange={e => setWaist(e.target.value)} placeholder="例：72" />
+                    </InputGroup>
+                 </div>
+              </div>
+            </section>
+
+            {/* トップス設定 */}
+            <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">2. メイン商品（トップス）設定</h2>
+              
+              {/* ボディ名とサイズのプリセット機能 */}
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 mb-4">
+                 <h3 className="text-sm font-bold text-purple-800 mb-3 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/react/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    サイズプリセット読込
+                 </h3>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-purple-700 mb-1">ボディ名</label>
+                      <select 
+                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm"
+                        value={selectedBody} 
+                        onChange={(e) => handlePresetChange(e.target.value, selectedSize)}
+                      >
+                        <option value="">-- 手動入力 --</option>
+                        {Object.keys(BODY_DATA).map(key => (
+                          <option key={key} value={key}>{key}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-purple-700 mb-1">サイズ</label>
+                      <select 
+                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none text-sm"
+                        value={selectedSize} 
+                        onChange={(e) => handlePresetChange(selectedBody, e.target.value)}
+                      >
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                      </select>
+                    </div>
+                 </div>
+              </div>
+
+              <InputGroup label="アイテム名 (例: Tシャツ, ジャケット)">
+                <input type="text" className="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={itemType} onChange={e => setItemType(e.target.value)} />
+              </InputGroup>
+              <InputGroup label="フィット感やシルエットの特徴 (任意)">
+                <textarea className="w-full p-2 border rounded-lg bg-gray-50 h-16 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={fit} onChange={e => setFit(e.target.value)} placeholder="例：XLサイズ、肩がドロップしたオーバーサイズ"></textarea>
+              </InputGroup>
+              <InputGroup label="素材やテクスチャ (任意)">
+                <input type="text" className="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={texture} onChange={e => setTexture(e.target.value)} />
+              </InputGroup>
+              
+              {/* 商品詳細仕様 */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4 mb-4">
+                <h3 className="text-sm font-bold text-gray-700 mb-3">商品サイズ仕様 (cm)</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">身丈</label>
+                    <input type="number" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={itemLength} onChange={e => setItemLength(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">身幅</label>
+                    <input type="number" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={itemWidth} onChange={e => setItemWidth(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">肩幅</label>
+                    <input type="number" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={itemShoulder} onChange={e => setItemShoulder(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">袖丈</label>
+                    <input type="number" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={itemSleeve} onChange={e => setItemSleeve(e.target.value)} />
+                  </div>
+                </div>
+
+                <h3 className="text-sm font-bold text-gray-700 mb-3 border-t pt-3">アイテム詳細 (質感・素材)</h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">素材</label>
+                    <input type="text" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={material} onChange={e => setMaterial(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">生地の厚さ</label>
+                    <input type="text" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={thickness} onChange={e => setThickness(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">透け感</label>
+                    <input type="text" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={sheerness} onChange={e => setSheerness(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">裏地</label>
+                    <input type="text" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={lining} onChange={e => setLining(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">伸縮性</label>
+                    <input type="text" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={stretch} onChange={e => setStretch(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">光沢感</label>
+                    <input type="text" className="w-full p-1.5 border rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" value={gloss} onChange={e => setGloss(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" className="w-5 h-5 text-blue-600 rounded" checked={hasBackImage} onChange={e => setHasBackImage(e.target.checked)} />
+                  <span className="font-semibold text-blue-900">背面の画像 (3枚目) を添付する</span>
+                </label>
+                {!hasBackImage && (
+                  <p className="text-sm text-blue-700 mt-2 ml-8">※未チェックの場合、AIに「裏側は一切見せない」ように自動指示します。</p>
+                )}
+              </div>
+            </section>
+
+            {/* ボトムス・靴設定 */}
+            <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">3. ボトムス・靴 設定</h2>
+              <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" className="w-5 h-5 text-green-600 rounded" checked={hasBottomsImage} onChange={e => setHasBottomsImage(e.target.checked)} />
+                  <span className="font-semibold text-green-900">ボトムス・靴の参照画像 (4枚目) を添付する</span>
+                </label>
+              </div>
+              <InputGroup label={hasBottomsImage ? "画像の補足指示" : "ボトムス・靴のデザイン指示 (必須)"}>
+                <textarea className="w-full p-2 border rounded-lg bg-gray-50 h-20 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={bottomsInstruction} onChange={e => setBottomsInstruction(e.target.value)}></textarea>
+              </InputGroup>
+            </section>
+
+            {/* スタイリング・環境 */}
+            <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">4. スタイリング・環境設定</h2>
+              <InputGroup label="アクセサリー・小物">
+                <input type="text" className="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={accessories} onChange={e => setAccessories(e.target.value)} />
+              </InputGroup>
+              <InputGroup label="ポーズ・表情">
+                <input type="text" className="w-full p-2 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={pose} onChange={e => setPose(e.target.value)} />
+              </InputGroup>
+              <InputGroup label="背景・雰囲気・ライティング">
+                <textarea className="w-full p-2 border rounded-lg bg-gray-50 h-20 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={environment} onChange={e => setEnvironment(e.target.value)}></textarea>
+              </InputGroup>
+            </section>
+
+          </div>
+
+          {/* 右カラム：プロンプト出力 */}
+          <div className="w-full lg:w-1/2">
+            <div className="bg-gray-900 rounded-xl shadow-lg sticky top-6 overflow-hidden flex flex-col h-[calc(100vh-3rem)] max-h-[800px]">
+              <div className="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 className="text-white font-bold flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/react/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  生成されたプロンプト
+                </h2>
+                <button 
+                  onClick={handleCopy}
+                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-all duration-200 flex items-center gap-2 ${copied ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+                >
+                  {copied ? (
+                    <>
+                      <svg xmlns="http://www.w3.org/react/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      コピー完了
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/react/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                      コピーする
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="p-0 flex-grow relative">
+                <textarea 
+                  className="w-full h-full p-6 bg-gray-900 text-gray-200 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                  value={generatePrompt()}
+                  readOnly
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
